@@ -10,6 +10,7 @@ import time
 import logging
 from statistics import mean
 import yaml
+import json
 
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
@@ -28,32 +29,25 @@ class TiltScanner():
     def __init__(self, config=None):
         self.logger = logging.getLogger('tilt-iot.tilt.TiltScanner')
         self.logger.info('Initializing TiltScanner')
-        self.parse_config()
+        self.parse_config(config)
         self.tilts = {}
         self.iot = self.iot_connect()
 
     def parse_config(self, config):
+        if not config:
+            return False
         with open(config, 'r') as ymlfile:
             cfg = yaml.load(ymlfile)
-
         self.scan_interval = cfg.get('bluetooth.scan_interval', 5)
         self.scan_pause = cfg.get('bluetooth.scan_pause', 20)
         self.scan_mode = cfg.get('bluetooth.scan_mode', 0)
-
         self.iot_client = cfg.get('iot.client', 'pi')
-        self.iot_topic = cfg.get('iot.client', 'brewing/{}'.format(self.iot_client))
+        self.iot_topic = cfg.get('iot.topic', 'brewing/{}'.format(self.iot_client))
         self.iot_endpoint = cfg.get('iot.endpoint', None)
         self.iot_ca_cert = cfg.get('iot.credential_ca_cert', None)
         self.iot_key = cfg.get('iot.credential_key', None)
         self.iot_cert = cfg.get('iot.credential_cert', None)
         return True
-
-    def get_config_value(obj, keys):
-        try:
-            for k in keys:
-
-        except KeyError:
-            return False
 
     def scan(self):
         tilt_filter = [IBeaconFilter(uuid=TILT) for TILT in TILTS.keys()]
@@ -66,7 +60,7 @@ class TiltScanner():
                 self.submit_metrics()
                 time.sleep(self.scan_pause)
             except Exception as e:
-                logging.error(e)
+                self.logger.error(e)
                 pass
 
     def set_tilt(self, uuid, temp_f, sg):
@@ -74,7 +68,7 @@ class TiltScanner():
             self.tilts[uuid] = Tilt(uuid)
         if self.scan_mode == 1 and self.tilts[uuid].temp_f and self.tilts[uuid].sg:
             return True
-        self.logger.info("Tilt: {}, Temperature F: {}, Specific Gravity: {}".format(
+        self.logger.debug("Tilt: {}, Temperature F: {}, Specific Gravity: {}".format(
                 TILTS[uuid],
                 temp_f,
                 sg
@@ -84,23 +78,22 @@ class TiltScanner():
         self.tilts[uuid].add_sg(sg)
 
     def iot_connect(self):
-        myMQTTClient = AWSIoTMQTTClient(self.iot_client)
-        myMQTTClient.configureEndpoint(self.iot_endpoint, 8883)
-        myMQTTClient.configureCredentials(self.iot_ca_cert, self.iot_key, self.iot_cert)
-        myMQTTClient.configureOfflinePublishQueueing(-1)
-        myMQTTClient.configureDrainingFrequency(2)
-        myMQTTClient.configureConnectDisconnectTimeout(10)
-        myMQTTClient.configureMQTTOperationTimeout(5)
-        return myMQTTClient
+        MQTTClient = AWSIoTMQTTClient(self.iot_client)
+        MQTTClient.configureEndpoint(self.iot_endpoint, 8883)
+        MQTTClient.configureCredentials(self.iot_ca_cert, self.iot_key, self.iot_cert)
+        MQTTClient.configureOfflinePublishQueueing(-1)
+        MQTTClient.configureDrainingFrequency(2)
+        MQTTClient.configureConnectDisconnectTimeout(10)
+        MQTTClient.configureMQTTOperationTimeout(5)
+        MQTTClient.connect()
+        return MQTTClient
 
     def submit_metrics(self):
         for tilt in self.tilts:
-            print(self.tilts[tilt])
+            self.logger.info(self.tilts[tilt])
             metric_data = self.get_metric(self.tilts[tilt])
-            if not self.dry_run:
-                self.iot.connect()
-                self.iot.publish(self.iot_topic, json.dumps(metric_data), 0)
-                self.iot.disconnect()
+            self.logger.debug("Publishing to IoT [{}]: {}".format(self.iot_topic, json.dumps(metric_data)))
+            self.iot.publish(self.iot_topic, json.dumps(metric_data), 0)
         self.tilts = {}
 
     def get_metric(self, tilt):
@@ -115,7 +108,7 @@ class TiltScanner():
         }
 
     def callback(self, bt_addr, rssi, packet, additional_info):
-        logging.debug("Packet found: <%s, %d> %s %s" % (bt_addr, rssi, packet.uuid, additional_info))
+        self.logger.debug("Packet found: <%s, %d> %s %s" % (bt_addr, rssi, packet.uuid, additional_info))
         self.set_tilt(packet.uuid, additional_info['major'], additional_info['minor'])
 
 class Tilt():
