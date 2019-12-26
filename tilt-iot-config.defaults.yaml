@@ -1,0 +1,25 @@
+# amount of time to gather BLE packets
+bluetooth.scan_interval: 5
+
+# amount of time between scans and data submissions
+bluetooth.scan_pause: 20
+
+# scanning mode
+# 0: use average value of all packets collected during scan_interval
+# 1: take first seen packet values
+# 2: take last seen packet values
+bluetooth.scan_mode: 0
+
+# AWS IoT device name
+iot.client: pizero1
+
+# AWS IoT topic to publish data to
+iot.topic: brewing/pizero1
+
+# AWS IoT endpoint hostname
+iot.endpoint: a1b2c3d4e3f6a1-ats.iot.us-east-1.amazonaws.com
+
+# AWS IoT key and certificates
+iot.credential_ca_cert: /home/pi/iot/ca.crt
+iot.credential_key: /home/pi/iot/pizero1.key
+iot.credential_cert: /home/pi/iot/pizero1.crt
