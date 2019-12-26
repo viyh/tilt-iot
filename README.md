@@ -1,11 +1,18 @@
 # tilt-iot
 Tilt Hydrometer data logging via AWS IoT
 
+## Architecture
+
+![Overview](https://github.com/viyh/tilt-iot/raw/master/tilt-iot.png "Architecture Overview")
+
+
 ## Installation
 
 * Allow non-root users to run the BLE scanner:
 ```sudo setcap cap_net_raw+eip /usr/bin/python3.5```
+
 ```sudo apt-get install -y python3-pip python3-bluez gcc libbluetooth-dev libcap2-bin```
+
 ```pip3 install -r requirements.txt```
 
 ## Setup
