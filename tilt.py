@@ -47,6 +47,7 @@ class TiltScanner():
         self.iot_ca_cert = cfg.get('iot.credential_ca_cert', None)
         self.iot_key = cfg.get('iot.credential_key', None)
         self.iot_cert = cfg.get('iot.credential_cert', None)
+        self.sg_as_int = cfg.get('values.sg_as_int', True)
         return True
 
     def scan(self):
@@ -64,6 +65,8 @@ class TiltScanner():
                 pass
 
     def set_tilt(self, uuid, temp_f, sg):
+        if not self.sg_as_int:
+            sg = sg / 1000.0
         if not uuid in self.tilts or self.scan_mode == 2:
             self.tilts[uuid] = Tilt(uuid)
         if self.scan_mode == 1 and self.tilts[uuid].temp_f and self.tilts[uuid].sg:
@@ -136,5 +139,5 @@ class Tilt():
 
     def add_sg(self, sg):
         self.sgs.append(sg)
-        self.sg = mean(self.sgs)
+        self.sg = round(mean(self.sgs))
         return True

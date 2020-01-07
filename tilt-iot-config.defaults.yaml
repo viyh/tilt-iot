@@ -23,3 +23,8 @@ iot.endpoint: a1b2c3d4e3f6a1-ats.iot.us-east-1.amazonaws.com
 iot.credential_ca_cert: /home/pi/iot/ca.crt
 iot.credential_key: /home/pi/iot/pizero1.key
 iot.credential_cert: /home/pi/iot/pizero1.crt
+
+# store SG value as integer, i.e. 1040 instead of float
+# True: int
+# False: float
+values.sg_as_int: True
