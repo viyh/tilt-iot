@@ -134,7 +134,7 @@ class Tilt():
     def add_temp(self, temp_f):
         self.temps_f.append(temp_f)
         self.temp_f = mean(self.temps_f)
-        self.temp_c = round((temp_f - 32) * 1.8, 1)
+        self.temp_c = round((temp_f - 32) * 5/9, 1)
         return True
 
     def add_sg(self, sg):
