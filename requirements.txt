@@ -5,4 +5,4 @@ boto3==1.9.253
 botocore==1.12.253
 PyBluez==0.22
 requests==2.22.0
-urllib3==1.25.8
+urllib3==1.26.5
